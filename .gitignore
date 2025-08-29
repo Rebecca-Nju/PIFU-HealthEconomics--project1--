@@ -1,0 +1,50 @@
+# -----------------------------
+# OpenSAFELY / General
+# -----------------------------
+# Ignore all outputs except .gz datasets
+output/*
+!output/*.gz
+
+# Ignore logs and metadata
+metadata/*
+*.log
+
+# -----------------------------
+# Stata files
+# -----------------------------
+*.smcl
+*.dta
+*.dta~
+*.dct
+*.do~
+*.gph
+*.stswp    # Stata temporary files (Do-file editor)
+
+# -----------------------------
+# Python files
+# -----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# -----------------------------
+# R files
+# -----------------------------
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+*.Rproj
+
+# -----------------------------
+# VS Code / IDE settings
+# -----------------------------
+.vscode/
+.idea/
+
+# -----------------------------
+# System files
+# -----------------------------
+.DS_Store
+Thumbs.db
