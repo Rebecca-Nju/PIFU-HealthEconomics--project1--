@@ -1,0 +1,93 @@
+2025-08-27T12:50:34.821564131Z 
+2025-08-27T12:50:34.821666792Z   ___  ____  ____  ____  ____ (R)
+2025-08-27T12:50:34.821668623Z  /__    /   ____/   /   ____/
+2025-08-27T12:50:34.821669612Z ___/   /   /___/   /   /___/   16.1   Copyright 1985-2019 StataCorp LLC
+2025-08-27T12:50:34.821670484Z   Statistics/Data Analysis            StataCorp
+2025-08-27T12:50:34.821671269Z                                       4905 Lakeway Drive
+2025-08-27T12:50:34.821672080Z      MP - Parallel Edition            College Station, Texas 77845 USA
+2025-08-27T12:50:34.821672992Z                                       800-STATA-PC        http://www.stata.com
+2025-08-27T12:50:34.821673789Z                                       979-696-4600        stata@stata.com
+2025-08-27T12:50:34.821674572Z                                       979-696-4601 (fax)
+2025-08-27T12:50:34.821675399Z 
+2025-08-27T12:50:34.821676124Z Unlimited-user 16-core Stata network license expires 13 Jul 2026:
+2025-08-27T12:50:34.821676910Z        Serial number:  501909306771
+2025-08-27T12:50:34.821677678Z          Licensed to:  NDPH
+2025-08-27T12:50:34.821678421Z                        University of Oxford
+2025-08-27T12:50:34.829187553Z 
+2025-08-27T12:50:34.829203079Z Notes:
+2025-08-27T12:50:34.829204239Z       1.  Unicode is supported; see help unicode_advice.
+2025-08-27T12:50:34.829205486Z       2.  More than 2 billion observations are allowed; see help obs_advice.
+2025-08-27T12:50:34.829206342Z       3.  Maximum number of variables is set to 5000; see help set_maxvar.
+2025-08-27T12:50:34.829207127Z 
+2025-08-27T12:50:34.829207842Z . do "/tmp/pfu_trend_plot.do.JcxJ.do" 
+2025-08-27T12:50:34.829208685Z 
+2025-08-27T12:50:34.829209363Z . . do "analysis/pfu_trend_plot.do" 
+2025-08-27T12:50:34.829210120Z 
+2025-08-27T12:50:34.829210849Z . *------------------------------------------------------------*
+2025-08-27T12:50:34.829211719Z . * PIFU Uptake Over Time
+2025-08-27T12:50:34.829212482Z . *------------------------------------------------------------*
+2025-08-27T12:50:34.829213261Z . 
+2025-08-27T12:50:34.829213969Z . * Load dataset
+2025-08-27T12:50:34.829214716Z . import delimited using "output/dataset_rheum.csv", clear
+2025-08-27T12:50:35.222675926Z (22 vars, 1,899 obs)
+2025-08-27T12:50:35.224480895Z 
+2025-08-27T12:50:35.224509995Z . 
+2025-08-27T12:50:35.224512927Z . * Keep only PFU patients
+2025-08-27T12:50:35.224514880Z . keep if any_pfu == "T" | any_pfu == "True" | any_pfu == "1"
+2025-08-27T12:50:35.225184129Z (1,026 observations deleted)
+2025-08-27T12:50:35.225191728Z 
+2025-08-27T12:50:35.225192830Z . 
+2025-08-27T12:50:35.225203377Z . * Collapse to counts by year
+2025-08-27T12:50:35.225204390Z . collapse (count) n=patient_id, by(first_pfu_year)
+2025-08-27T12:50:35.232798095Z 
+2025-08-27T12:50:35.232844585Z . 
+2025-08-27T12:50:35.232846363Z . 
+2025-08-27T12:50:35.232847459Z . * Save collapsed data for plotting outside Stata
+2025-08-27T12:50:35.232848747Z . export delimited using "output/processed/pfu_trend_counts.csv", replace 
+2025-08-27T12:50:35.236274633Z (note: file output/processed/pfu_trend_counts.csv not found)
+2025-08-27T12:50:35.236293087Z file output/processed/pfu_trend_counts.csv saved
+2025-08-27T12:50:35.236294643Z 
+2025-08-27T12:50:35.236295773Z .         
+2025-08-27T12:50:35.236296805Z .         
+2025-08-27T12:50:35.236297799Z . * Plot uptake over time
+2025-08-27T12:50:35.236298860Z . twoway (line n first_pfu_year, sort lwidth(medthick) lcolor(blue)) ///
+2025-08-27T12:50:35.236300318Z >        , ytitle("Number of PFU patients") xtitle("Year of first PFU") ///
+2025-08-27T12:50:35.236301840Z >          title("PFU Uptake Over Time")  
+2025-08-27T12:50:35.887841829Z 
+2025-08-27T12:50:35.887863445Z .         
+2025-08-27T12:50:35.887866448Z . 
+2025-08-27T12:50:35.887868095Z . *Save plot //to only run in stata - Issue in STata environment: Docker image 
+2025-08-27T12:50:35.887869690Z > running Stata in OpenSAFELY doesnt include GRaph2png translator
+2025-08-27T12:50:35.887872320Z . *graph export "output/processed/pfu_trend_plot.png", replace
+2025-08-27T12:50:35.887873893Z .         
+2025-08-27T12:50:35.887875247Z . 
+2025-08-27T12:50:35.887876532Z . 
+2025-08-27T12:50:35.887877785Z . 
+2025-08-27T12:50:35.887879031Z . 
+2025-08-27T12:50:35.887880297Z . 
+2025-08-27T12:50:35.887881567Z . 
+2025-08-27T12:50:35.887882864Z end of do-file
+2025-08-27T12:50:35.887884172Z 
+2025-08-27T12:50:35.887885480Z . . file open output using "/tmp/pfu_trend_plot.do.K7WF.out", write text replac
+2025-08-27T12:50:35.887887027Z > e
+2025-08-27T12:50:35.887888379Z 
+2025-08-27T12:50:35.887890047Z . . file write output "success" 
+2025-08-27T12:50:35.887891460Z 
+2025-08-27T12:50:35.887892745Z . . file close output
+2025-08-27T12:50:35.887894717Z 
+2025-08-27T12:50:35.887896026Z . 
+2025-08-27T12:50:35.887897313Z end of do-file
+2025-08-27T12:50:35.887898667Z 
+2025-08-27T12:50:35.887899941Z 
+2025-08-27T12:50:35.922946285Z . 
+
+job_definition_id: qo26tg7lbrehdxey
+job_definition_request_id: a88c5e6018
+docker_image_id: sha256:d11fbf0625709daf088cc95145fa2f2f463b8d1db6bf793b18c058c401a0c515
+exit_code: 0
+created_at: 1756299023
+completed_at: 1756299039
+status_message: Completed successfully
+
+outputs:
+  output/processed/pfu_trend_counts.csv  - moderately_sensitive

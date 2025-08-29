@@ -1,0 +1,24 @@
+version: "4.0"
+
+actions:
+  # Step 1: Generate rheumatology dataset
+  generate_dataset_rheum:
+    run: ehrql:v1 generate-dataset analysis/dataset_definition_rheum.py --output output/dataset_rheum.csv.gz
+    outputs:
+      highly_sensitive:
+        dataset: output/dataset_rheum.csv.gz
+
+  # Step 2: Run Stata script to build Table 3
+  rheum_table3:
+    run: stata-mp:v1 analysis/rheum_table3.do
+    needs: [generate_dataset_rheum]
+    outputs:
+      moderately_sensitive:
+        table: output/processed/rheum_table3.csv
+
+  pfu_trend_plot:
+    run: stata-mp:v1 analysis/pfu_trend_plot.do
+    needs: [generate_dataset_rheum]
+    outputs:
+      moderately_sensitive:
+        table: output/processed/pfu_trend_counts.csv

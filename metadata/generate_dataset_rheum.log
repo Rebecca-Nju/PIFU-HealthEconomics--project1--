@@ -1,0 +1,34 @@
+2025-08-29T14:01:11.566755228Z [info   ] Compiling dataset definition from analysis/dataset_definition_rheum.py
+2025-08-29T14:01:11.881511011Z [info   ] Generating dummy dataset
+2025-08-29T14:01:11.882533462Z [info   ] Using next generation dummy data generation
+2025-08-29T14:01:11.882725062Z [info   ] Attempting to generate 9000 matching patients (random seed: BwRV3spP, timeout: 60s)
+2025-08-29T14:01:11.882801181Z [info   ] Use `dataset.configure_dummy_data(population_size=N)` to change number of patients generated
+2025-08-29T14:01:17.299219194Z [info   ] Generated 5000 patients, found 247 matching
+2025-08-29T14:01:21.583019720Z [info   ] Generated 10000 patients, found 527 matching
+2025-08-29T14:01:25.407723295Z [info   ] Generated 15000 patients, found 789 matching
+2025-08-29T14:01:29.240642198Z [info   ] Generated 20000 patients, found 1033 matching
+2025-08-29T14:01:33.175846117Z [info   ] Generated 25000 patients, found 1289 matching
+2025-08-29T14:01:37.408823690Z [info   ] Generated 30000 patients, found 1529 matching
+2025-08-29T14:01:42.286307489Z [info   ] Generated 35000 patients, found 1782 matching
+2025-08-29T14:01:46.633922892Z [info   ] Generated 40000 patients, found 2033 matching
+2025-08-29T14:01:50.911872767Z [info   ] Generated 45000 patients, found 2273 matching
+2025-08-29T14:01:54.686533746Z [info   ] Generated 50000 patients, found 2529 matching
+2025-08-29T14:01:58.679675307Z [info   ] Generated 55000 patients, found 2790 matching
+2025-08-29T14:02:02.507074468Z [info   ] Generated 60000 patients, found 3024 matching
+2025-08-29T14:02:06.418445267Z [info   ] Generated 65000 patients, found 3264 matching
+2025-08-29T14:02:10.393154181Z [info   ] Generated 70000 patients, found 3530 matching
+2025-08-29T14:02:14.191090067Z [info   ] Generated 75000 patients, found 3762 matching
+2025-08-29T14:02:14.191118683Z [warning] Failed to find 9000 matching patients within 60 seconds — giving up
+2025-08-29T14:02:14.191120999Z [info   ] Use e.g. `dataset.configure_dummy_data(timeout=120)` to try for longer
+
+
+job_definition_id: 7hicghzd2qjsoaqf
+job_definition_request_id: 4a6ca0cd07
+docker_image_id: sha256:6e5089418f2c8df70768cee2ecf82af9f0b5f194c67c5004cefe9df7471a7a00
+exit_code: 0
+created_at: 1756476064
+completed_at: 1756476143
+status_message: Completed successfully
+
+outputs:
+  output/dataset_rheum.csv.gz  - highly_sensitive
