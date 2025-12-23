@@ -3,28 +3,19 @@
 # ------------------------------------------------------------------
 
 from ehrql import codelist_from_csv
+from itertools import chain
 
 
 # Ethnicity (6-group categories)
 #Source: https://www.opencodelists.org/codelist/opensafely/ethnicity-snomed-0removed/22911876/ 
 #filename: analysis/codelists/ethnicity_codelist_with_categories.csv
+#The full 6 Group Categories includes "6 - Not stated" which was not included in our codelist # missing
 
 ethnicity_codelist = codelist_from_csv(
-    "codelists/ethnicity_codelist_with_categories.csv",
-    column="snomedcode",
-    category_column="Label_6"
+    "analysis/codelists/ethnicity_codelist_with_categories.csv",
+    column="code",
+    category_column="Grouping_6"
 )
-
-
-#Preferred language 
-#Source: https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/preflang_cod/20250912/ 
-#filename: analysis/codelists/preflang_cod.csv
-
-language_codelist = codelist_from_csv(
-    "analysis/codelists/preflang_cod.csv",
-    column="code"
-)
-
 
 # BMI-recorded / measurement codes
 # Source: https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/bmival_cod/20250912/
@@ -34,55 +25,77 @@ bmi_codelist = codelist_from_csv(
     column="code"
 )
 
+#Preferred language 
+#Source: https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/preflang_cod/20250912/ 
+#filename: analysis/codelists/preflang_cod.csv
+
+language_codelist = codelist_from_csv(
+    "analysis/codelists/preflang_cod.csv",
+    column="code",
+    category_column= "term"
+)
+
+
+# Learning disability codes
+# Source: https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/ld_cod/20250912/
+# Filename: analysis/codelists/ld_cod.csv
+learning_disability_codelist = codelist_from_csv(
+    "analysis/codelists/ld_cod.csv",
+    column="code",
+    category_column = "term"
+)
+
+
+
 # ------------------------------------------------------------------
 #Disease definitions (Inflammatory arthritis subtypes)
 # ------------------------------------------------------------------
 
-# Rheumatoid Arthritis (primary care)
+# Rheumatoid Arthritis (SNOMED)
 # Source: https://www.opencodelists.org/codelist/user/markdrussell/new-rheumatoid-arthritis/1697e230/
-# Filename: analysis/codelists/ra_primary.csv
-ra_primary_codelist = codelist_from_csv(
-    "analysis/codelists/ra_primary.csv",
+# Filename: analysis/codelists/rheumatoid_snomed.csv
+rheumatoid_snomed_codelist = codelist_from_csv(
+    "analysis/codelists/rheumatoid_snomed.csv",
     column="code"
 )
 
-# Rheumatoid Arthritis (secondary care)
+# Rheumatoid Arthritis (ICD-10)
 # Source: https://www.opencodelists.org/codelist/user/markdrussell/rheumatoid-arthritis-secondary-care/245780e9/
-# Filename: analysis/codelists/ra_secondary.csv
-ra_secondary_codelist = codelist_from_csv(
-    "analysis/codelists/ra_secondary.csv",
+# Filename: analysis/codelists/rheumatoid_icd10.csv
+rheumatoid_icd10_codelist = codelist_from_csv(
+    "analysis/codelists/rheumatoid_icd10.csv",
     column="code"
 )
 
-# Psoriatic Arthritis (primary)
+# Psoriatic Arthritis (SNOMED)
 # Source: https://www.opencodelists.org/codelist/user/markdrussell/psoriatic-arthritis/48b6c89a/
-# Filename: analysis/codelists/psa_primary.csv
-psa_primary_codelist = codelist_from_csv(
-    "analysis/codelists/psa_primary.csv",
+# Filename: analysis/codelists/psa_snomed.csv
+psa_snomed_codelist = codelist_from_csv(
+    "analysis/codelists/psa_snomed.csv",
     column="code"
 )
 
-# Psoriatic Arthritis (secondary)
+# Psoriatic Arthritis (ICD-10)
 # Source: https://www.opencodelists.org/codelist/user/markdrussell/psoriatic-arthritis-secondary-care/67a69bfb/
-# Filename: analysis/codelists/psa_secondary.csv
-psa_secondary_codelist = codelist_from_csv(
-    "analysis/codelists/psa_secondary.csv",
+# Filename: analysis/codelists/psa_icd10.csv
+psa_icd10_codelist = codelist_from_csv(
+    "analysis/codelists/psa_icd10.csv",
     column="code"
 )
 
-# Axial Spondyloarthritis (primary)
+# Axial Spondyloarthritis (SNOMED)
 # Source: https://www.opencodelists.org/codelist/user/markdrussell/axial-spondyloarthritis/2fa75565/
-# Filename: analysis/codelists/axspa_primary.csv
-axspa_primary_codelist = codelist_from_csv(
-    "analysis/codelists/axspa_primary.csv",
+# Filename: analysis/codelists/axialspa_snomed.csv
+axialspa_snomed_codelist = codelist_from_csv(
+    "analysis/codelists/axialspa_snomed.csv",
     column="code"
 )
 
-# Axial Spondyloarthritis (secondary)
+# Axial Spondyloarthritis (ICD-10)
 # Source: https://www.opencodelists.org/codelist/user/markdrussell/axial-spondyloarthritis-secondary-care/4e9728c6/
-# Filename: analysis/codelists/axspa_secondary.csv
-axspa_secondary_codelist = codelist_from_csv(
-    "analysis/codelists/axspa_secondary.csv",
+# Filename: analysis/codelists/axialspa_icd10.csv
+axialspa_icd10_codelist = codelist_from_csv(
+    "analysis/codelists/axialspa_icd10.csv",
     column="code"
 )
 
@@ -92,17 +105,32 @@ axspa_secondary_codelist = codelist_from_csv(
 undiff_eia_codelist = codelist_from_csv(
     "analysis/codelists/undiff_eia.csv",
     column="code"
+   
+)
+
+# create a dict mapping category name -> SNOMED code list (used by to_category)
+eia_snomed_categories = {
+    "axialspa": axialspa_snomed_codelist,
+    "psa":      psa_snomed_codelist,
+    "rheumatoid": rheumatoid_snomed_codelist,
+    "undiff_eia": undiff_eia_codelist,
+}
+
+# Combined Inflammatory Arthritis (SNOMED)
+eia_snomed_codelist = (
+    axialspa_snomed_codelist +
+    psa_snomed_codelist +
+    rheumatoid_snomed_codelist +
+    undiff_eia_codelist
 )
 
 
-# Learning disability codes
-# Source: https://www.opencodelists.org/codelist/nhsd-primary-care-domain-refsets/ld_cod/20250912/
-# Filename: analysis/codelists/ld_cod.csv
-learning_disability_codelist = codelist_from_csv(
-    "analysis/codelists/ld_cod.csv",
-    column="code"
+# Combined Inflammatory Arthritis (ICD-10)
+eia_icd10_codelist = (
+  axialspa_icd10_codelist +
+  psa_icd10_codelist +
+   rheumatoid_icd10_codelist
 )
-
 
 # ------------------------------------------------------------------
 # Medications
@@ -110,9 +138,10 @@ learning_disability_codelist = codelist_from_csv(
 
 # DMARDs (Disease-Modifying Anti-Rheumatic Drugs)
 # Source: https://www.opencodelists.org/codelist/nhs-drug-refsets/dmardsdrug_cod/20250912/
-# Filename: analysis/codelists/dmardsdrug_cod.csv
-dmard_codelist = codelist_from_csv(
-    "analysis/codelists/dmardsdrug_cod.csv",
+#Mainly contains Conventional synthetic DMARDs (csDMARDs)
+# Filename: analysis/codelists/csDMARD_cod.csv
+DMARD_codelist = codelist_from_csv(
+    "analysis/codelists/DMARD_cod.csv",
     column="code"
 )
 
