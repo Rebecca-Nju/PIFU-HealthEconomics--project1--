@@ -1,10 +1,10 @@
 /*==============================================================================
-DO FILE NAME:			resource_use_graphs
+DO FILE NAME:			resource_use_graphs.do
 PROJECT:				OpenSAFELY PIFU project: Resource use
 DATE: 					08/12/2025
 AUTHOR:					R Njuguna									
 DESCRIPTION OF FILE:	Resource use tables and graphs
-DATASETS USED:			Measures files					
+DATASETS USED:			measures.csv				
 ==============================================================================*/
 
 version 18.0
@@ -37,81 +37,18 @@ format period_date %td
 gen double numerator_num = real(numerator)
 gen double denominator_num = real(denominator)
 
-* --------------------------
-* PLOT 1: All OPA visits (Rheum and Non-rheumatology opa visits over time)
-//For patients with a inflammatory arthritis diagnosis 
-* --------------------------
-preserve
-keep if measure == "count_all_opa"
+*===============================================================
+* PLOT 1a: Combined plot (Allopa, rheum and nonrheum) - 
+*     mean visits per patient
+*===============================================================
 
-* create plotting var: use numerator as counts (change to ratio if you want rate)
-gen double plotval = real(numerator)
-
-* ensure one row per period (collapse mean safe if already one row)
-collapse (mean) plotval, by(period_date)
-
-twoway line plotval period_date, sort lwidth(medium) ///
-    title("Total outpatient visits over time") ///
-    xtitle("Month") ytitle("Number of outpatient visits") ///
-	 graphregion(margin(r+3)) ///
-    name(g_overall, replace)
-
-graph export "$figdir/all_opa.png", name(all_opa_) replace width(1600)
-restore
-
-* --------------------------
-* PLOT 2: rheumatology opa visits over time
-* --------------------------
-preserve
-keep if measure == "count_rheum_opa"
-
-* create plotting var: use numerator as counts (change to ratio if you want rate)
-gen double plotval = real(numerator)
-
-* ensure one row per period (collapse mean safe if already one row)
-collapse (mean) plotval, by(period_date)
-
-twoway line plotval period_date, sort lwidth(medium) ///
-    title("Total rheumatology outpatient visits over time") ///
-    xtitle("Month") ytitle("Number of rheumatology outpatient visits") ///
-	 graphregion(margin(r+3)) ///
-    name(g_overall_opa, replace)
-
-graph export "$figdir/rheum_opa.png", name(rheum_opa_) replace width(1600)
-restore
-
-* --------------------------
-* PLOT 3: Non-rheumatology opa visits over time
-* --------------------------
-preserve
-keep if measure == "count_nonrheum_opa"
-
-* create plotting var: use numerator as counts (change to ratio if you want rate)
-gen double plotval = real(numerator)
-
-* ensure one row per period (collapse mean safe if already one row)
-collapse (mean) plotval, by(period_date)
-
-twoway line plotval period_date, sort lwidth(medium) ///
-    title("Total non-rheumatology outpatient visits over time") ///
-    xtitle("Month") ytitle("Number of non-rheumatology outpatient visits") ///
-	 graphregion(margin(r+3)) ///
-    name(g_rheum_opa, replace)
-
-graph export "$figdir/nonrheum_opa.png", name(rheum_opa_) replace width(1600)
-restore
-
-
-* --------------------------
-* PLOT 4: Combined plot (Allopa, rheum and nonrheum)
-* --------------------------
 preserve
 
-* keep the three measures
-keep if inlist(measure, "count_all_opa", "count_rheum_opa", "count_nonrheum_opa")
+* keep the three visit measures + patient_count measure
+keep if inlist(measure, "count_all_opa", "count_rheum_opa", "count_nonrheum_opa", "patient_count")
 
 * ensure numeric count: use numerator_num (Calculated above line 37)
-* collapse to one observation per period_date x measure (sum or mean as appropriate)
+* collapse to one observation per period_date x measure (sum)
 collapse (sum) cnt = numerator_num, by(period_date measure)
 
 * now reshape wide so each measure is a column
@@ -121,90 +58,171 @@ reshape wide cnt, i(period_date) j(measure) string
 rename cntcount_all_opa        all_opa
 rename cntcount_rheum_opa      rheum_opa
 rename cntcount_nonrheum_opa   nonrheum_opa
+rename cntpatient_count        patient_count
 
-* replace missing with 0 if you prefer zeros instead of missing
+* replace missing with 0 for visit totals
 replace all_opa = 0 if missing(all_opa)
 replace rheum_opa = 0 if missing(rheum_opa)
 replace nonrheum_opa = 0 if missing(nonrheum_opa)
 
-* Plot the three series
+* --------------------------
+* Compute mean visits per patient
+* --------------------------
+gen double mean_all_opa = .
+gen double mean_rheum_opa = .
+gen double mean_nonrheum_opa = .
+
+replace mean_all_opa = all_opa / patient_count if patient_count > 0
+replace mean_rheum_opa = rheum_opa / patient_count if patient_count > 0
+replace mean_nonrheum_opa = nonrheum_opa / patient_count if patient_count > 0
+
+* --------------------------
+* Plot the three mean series (per patient)
+* --------------------------
 twoway ///
-    (line all_opa period_date,       sort lcolor(blue)  lwidth(medium) ) ///
-    (line rheum_opa period_date,     sort lcolor(red)  lpatt(dash)  lwidth(medium) ) ///
-    (line nonrheum_opa period_date,  sort lcolor(green) lpatt (dash)  lwidth(medium) ) ///
+    (line mean_all_opa period_date,       sort lcolor(blue)  lwidth(medium) ) ///
+    (line mean_rheum_opa period_date,     sort lcolor(red)   lpatt(dash)  lwidth(medium) ) ///
+    (line mean_nonrheum_opa period_date,  sort lcolor(green) lpatt(dash)  lwidth(medium) ) ///
     , ///
-    title("Total outpatient visits over time") ///
-    xtitle("Month") ytitle("Number of outpatient visits") ///
-    legend(order(1 "All OPA" 2 "Rheum OPA" 3 "Non-rheum OPA") rows(1)) ///
-	 graphregion(margin(r+3)) ///
+    title("Mean outpatient visits per patient over time") ///
+    xtitle("Month") ytitle("Mean visits per patient per month") ///
+    legend(order(1 "All OPA" 2 "Rheum OPA" 3 "Non-rheum OPA") pos(6) rows(1)) ///
+    graphregion(margin(r+3)) ///
     name(g_overall, replace)
 
-graph export "$figdir/all_opa.png", name(g_overall) replace width(1600)
+graph export "$figdir/all_opa_mean_per_patient.png", name(g_overall) replace width(1600)
 
 restore
 
 
 *===============================================================
-*PLOT 5: Total OPA by PIFU
-*==============================================================
-
-
+* PLOT 1b: Combined plot (Allopa, rheum and nonrheum) 
+*     Mean visits per 1000 patients
+*===============================================================
 preserve
 
-* Use the measure that contains PIFU breakdown
-keep if measure == "count_all_opa_by_pfu"
+* keep the three visit measures + patient_count measure
+keep if inlist(measure, "count_all_opa", "count_rheum_opa", "count_nonrheum_opa", "patient_count")
 
-* create numeric count
-gen double cnt = numerator_num
+* ensure numeric count: use numerator_num (Calculated above line 37)
+* collapse to one observation per period_date x measure (sum)
+collapse (sum) cnt = numerator_num, by(period_date measure)
 
-* collapse to one observation per period_date x pfu_group
-collapse (sum) cnt, by(period_date pfu_group)
+* now reshape wide so each measure is a column
+reshape wide cnt, i(period_date) j(measure) string
 
-* create two series
-bysort period_date: egen pifu_cnt    = total(cond(pfu_group == "pfu", cnt, .))
-bysort period_date: egen nonpifu_cnt = total(cond(pfu_group == "non_pfu", cnt, .))
+* rename into clean variables (check the exact generated names with describe if unsure)
+rename cntcount_all_opa        all_opa
+rename cntcount_rheum_opa      rheum_opa
+rename cntcount_nonrheum_opa   nonrheum_opa
+rename cntpatient_count        patient_count
 
-* keep one row per period_date
-bysort period_date: keep if _n == 1
+* replace missing with 0 if you prefer zeros instead of missing for visit totals
+replace all_opa = 0 if missing(all_opa)
+replace rheum_opa = 0 if missing(rheum_opa)
+replace nonrheum_opa = 0 if missing(nonrheum_opa)
 
-* Plot
+* Leave patient_count missing if missing (guard below prevents division by zero)
+* optionally replace patient_count = 0 if you prefer (not recommended)
+
+* --------------------------
+* Compute mean visits per patient
+* --------------------------
+* Prevent division by zero by computing only where patient_count>0
+gen double mean_all_opa = .
+gen double mean_rheum_opa = .
+gen double mean_nonrheum_opa = .
+
+replace mean_all_opa = all_opa / patient_count if patient_count > 0
+replace mean_rheum_opa = rheum_opa / patient_count if patient_count > 0
+replace mean_nonrheum_opa = nonrheum_opa / patient_count if patient_count > 0
+
+* Scale to per-1000 patients for easier plotting/reading
+gen double mean_all_opa_per1000 = mean_all_opa * 1000
+gen double mean_rheum_opa_per1000 = mean_rheum_opa * 1000
+gen double mean_nonrheum_opa_per1000 = mean_nonrheum_opa * 1000
+
+* --------------------------
+* Plot the three mean series (per 1,000 patients)
+* --------------------------
 twoway ///
-    (line pifu_cnt    period_date, sort lcolor(blue)  lwidth(medium)) ///
-    (line nonpifu_cnt period_date, sort lcolor(red)   lwidth(medium) lpatt(dash)) ///
+    (line mean_all_opa_per1000 period_date,       sort lcolor(blue)  lwidth(medium) ) ///
+    (line mean_rheum_opa_per1000 period_date,     sort lcolor(red)  lpatt(dash)  lwidth(medium) ) ///
+    (line mean_nonrheum_opa_per1000 period_date,  sort lcolor(green) lpatt(dash)  lwidth(medium) ) ///
     , ///
-    title("Total outpatient visits over time — PIFU vs Non-PIFU") ///
-    xtitle("Time period") ytitle("Number of outpatient visits") ///
-  legend(order(1 "PIFU" 2 "Non-PIFU") position(6) ring(0.5)) ///
+    title("Mean outpatient visits per 1,000 patients over time") /// 
+    xtitle("Month") ytitle("Visits per 1,000 patients") ///
+    legend(order(1 "All OPA" 2 "Rheum OPA" 3 "Non-rheum OPA") position(6) rows(1)) ///
     graphregion(margin(r+3)) ///
-    name(g_pifu, replace)
+    name(g_overall, replace)
 
-graph export "$figdir/all_opa_by_pifu.png", name(g_pifu) replace width(1600)
+graph export "$figdir/all_opa_mean_per1000.png", name(g_overall) replace width(1600)
 
 restore
 
-*===============================================================
-* PLOT 6: Total OPA by PIFU with COVID restriction periods
-*===============================================================
 
+
+*===============================================================
+* PLOT 2: Combined plot (All OPA, rheum and non-rheum)
+*          Mean visits per 1,000 patients with COVID shading
+*===============================================================
 
 preserve
 
-* --- Prepare data ---
-keep if measure == "count_all_opa_by_pfu"
+*---------------------------------------------------------------
+* Keep required measures
+*---------------------------------------------------------------
+keep if inlist(measure, ///
+    "count_all_opa", ///
+    "count_rheum_opa", ///
+    "count_nonrheum_opa", ///
+    "patient_count")
 
-gen double cnt = numerator_num
-collapse (sum) cnt, by(period_date pfu_group)
+*---------------------------------------------------------------
+* Collapse to one row per period_date x measure
+*---------------------------------------------------------------
+collapse (sum) cnt = numerator_num, by(period_date measure)
 
-* Build PIFU / NON-PIFU series (case-insensitive)
-bysort period_date: egen pifu_cnt    = total(cond(lower(pfu_group) == "pfu", cnt, .))
-bysort period_date: egen nonpifu_cnt = total(cond(lower(pfu_group) != "pfu", cnt, .))
+*---------------------------------------------------------------
+* Reshape to wide format
+*---------------------------------------------------------------
+reshape wide cnt, i(period_date) j(measure) string
 
-* Keep one row per period_date
-bysort period_date: keep if _n == 1
+* Rename variables
+rename cntcount_all_opa        all_opa
+rename cntcount_rheum_opa      rheum_opa
+rename cntcount_nonrheum_opa   nonrheum_opa
+rename cntpatient_count        patient_count
 
+* Replace missing visit counts with 0
+replace all_opa = 0 if missing(all_opa)
+replace rheum_opa = 0 if missing(rheum_opa)
+replace nonrheum_opa = 0 if missing(nonrheum_opa)
+
+*---------------------------------------------------------------
+* Compute mean visits per patient
+*---------------------------------------------------------------
+gen double mean_all_opa = .
+gen double mean_rheum_opa = .
+gen double mean_nonrheum_opa = .
+
+replace mean_all_opa = all_opa / patient_count if patient_count > 0
+replace mean_rheum_opa = rheum_opa / patient_count if patient_count > 0
+replace mean_nonrheum_opa = nonrheum_opa / patient_count if patient_count > 0
+
+* Scale to per 1,000 patients
+gen double mean_all_opa_per1000      = mean_all_opa * 1000
+gen double mean_rheum_opa_per1000    = mean_rheum_opa * 1000
+gen double mean_nonrheum_opa_per1000 = mean_nonrheum_opa * 1000
+
+*---------------------------------------------------------------
+* Format date axis
+*---------------------------------------------------------------
 format period_date %tdDDMonCCYY
 
-* --- COVID lockdown periods (UK national) ---
+*---------------------------------------------------------------
+* COVID restriction periods (UK national)
+*---------------------------------------------------------------
 local lock1_start = daily("2020-03-23","YMD")
 local lock1_end   = daily("2020-07-04","YMD")
 
@@ -214,30 +232,48 @@ local lock2_end   = daily("2020-12-02","YMD")
 local lock3_start = daily("2021-01-06","YMD")
 local lock3_end   = daily("2021-03-29","YMD")
 
-* --- Plot: PIFU/Non-PIFU lines +  vertical lockdown lines ---
-twoway ///
-    (line pifu_cnt    period_date, sort lcolor(blue)  lwidth(medium)) ///
-    (line nonpifu_cnt period_date, sort lcolor(red)   lwidth(medium) lpatt(dash)) ///
-    , ///
-    xline(`lock1_start' `lock1_end', lcolor(black) lpattern(dash) lwidth(medium)) ///
-    xline(`lock2_start' `lock2_end', lcolor(green) lpattern(dash) lwidth(medium)) ///
-    xline(`lock3_start' `lock3_end', lcolor(purple) lpattern(dash) lwidth(medium)) ///
-    title("Total outpatient visits over time — PIFU vs Non-PIFU") ///
-    subtitle("Dashed vertical lines = COVID-19 restriction periods") ///
-    xtitle("Time period") ///
-    ytitle("Number of outpatient visits") ///
-    legend(order(1 "PIFU" 2 "Non-PIFU") ring(0.5) pos(6)) ///
-	 graphregion(margin(r+3)) ///
-    name(g_pifu_covid, replace)
+*---------------------------------------------------------------
+* Define vertical range for shading
+*---------------------------------------------------------------
+egen ymax = rowmax(mean_all_opa_per1000 ///
+                   mean_rheum_opa_per1000 ///
+                   mean_nonrheum_opa_per1000)
 
-graph export "$figdir/all_opa_by_pifu_covid.png", name(g_pifu_covid) replace width(1600)
+gen ymin = 0
+
+*---------------------------------------------------------------
+* Plot with shaded COVID periods
+*---------------------------------------------------------------
+twoway ///
+    /* COVID restriction shading */ ///
+    (rarea ymin ymax period_date if inrange(period_date, `lock1_start', `lock1_end'), ///
+        color(black%70) lwidth(none)) ///
+    (rarea ymin ymax period_date if inrange(period_date, `lock2_start', `lock2_end'), ///
+        color(black%70) lwidth(none)) ///
+    (rarea ymin ymax period_date if inrange(period_date, `lock3_start', `lock3_end'), ///
+        color(black%70) lwidth(none)) ///
+    ///
+    /* Mean visit lines */ ///
+    (line mean_all_opa_per1000 period_date,       sort lcolor(blue)  lwidth(medium)) ///
+    (line mean_rheum_opa_per1000 period_date,     sort lcolor(red)   lpatt(dash) lwidth(medium)) ///
+    (line mean_nonrheum_opa_per1000 period_date,  sort lcolor(green) lpatt(dash) lwidth(medium)) ///
+    , ///
+    title("Mean outpatient visits per 1,000 patients over time") ///
+    subtitle("Shaded regions indicate UK COVID-19 restriction periods") ///
+    xtitle("Month") ///
+    ytitle("Visits per 1,000 patients") ///
+    legend(order(4 "All OPA" 5 "Rheum OPA" 6 "Non-rheum OPA") position(6) rows(1)) ///
+    graphregion(margin(r+3)) ///
+    name(g_overall, replace)
+
+graph export "$figdir/all_opa_mean_per1000.png", ///
+    name(g_overall) replace width(1600)
 
 restore
 
 
-
 *===============================================================
-*PLOT: BAR GRAPH - Pre-PIFU post PIFU - TO EDIT
+*PLOT 3: BAR GRAPH - Pre-PIFU post PIFU - visits per 1,000 patients
 *==============================================================
 preserve
 
@@ -251,8 +287,11 @@ keep if inlist(measure, ///
 * ------------------------------------------------------------------
 collapse (sum) numerator_num denominator_num, by(measure)
 
-* Compute mean visits per patient per month
-gen rate_ppm = numerator_num / denominator_num
+* Compute mean visits per patient per month (visits per patient-month)
+gen double rate_ppm = numerator_num / denominator_num
+
+* Convert to per 1,000 patients (per month)
+gen double rate_per1000 = rate_ppm * 1000
 
 * Create readable labels
 gen str10 phase = ""
@@ -260,23 +299,22 @@ replace phase = "Pre-PIFU"  if measure == "count_all_opa_pre_pifu"
 replace phase = "Post-PIFU" if measure == "count_all_opa_post_pifu"
 
 * ------------------------------------------------------------------
-* Final bar chart (both bars in one plot)
+* Final bar chart (both bars in one plot) - per 1,000 patients per month
 * ------------------------------------------------------------------
-graph bar rate_ppm, ///
+graph bar rate_per1000, ///
     over(phase, label(angle(0))) ///
-    ytitle("Mean outpatient visits per patient per month") ///
+    ytitle("Mean outpatient visits per 1,000 patients per month") ///
     title("Outpatient visit rates before and after first PIFU") ///
     blabel(bar, format(%4.2f)) ///
     bar(1, lcolor(none)) ///
-    name(g_pifu_prepost_corrected, replace)
+    name(g_pifu_prepost_per1000, replace)
 
 * Export
-graph export "$figdir/pifu_prepost_bar_corrected.png", ///
-    name(g_pifu_prepost_corrected) replace width(1600)
+graph export "$figdir/pifu_prepost_bar_per1000.png", ///
+    name(g_pifu_prepost_per1000) replace width(1600)
 
 restore
 
-**
 *===============================================================
 *PLOT 7: ALL OPAs  plot by sex
 *==============================================================
